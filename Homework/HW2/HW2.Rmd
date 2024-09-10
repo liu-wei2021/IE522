@@ -43,31 +43,177 @@ $$
 
 2.1 (1.5 point) Construct a histogram for *Today* - the percentage return of S&P 500. Make the vertical axis density instead of frequency. Set the number of bins to 50. Add a normal fit to the histogram you obtain. Is the normal distribution fitting the peak well? Add "xlim=c(2,6),ylim=c(0,0.1)" to the hist function to zoom in on the right tail. Make sure you have two plots side by side. Is the normal distribution fitting the tails well? 
 
+```{r, fig.width=10, fig.height=7}
+# Plot the histogram
+par(mfrow = c(1, 2))  # Set up for two plots side by side
+
+# First plot: regular histogram with density
+hist(sp$Today, breaks = 50, freq = FALSE, main = "Density of S&P 500 Returns", xlab = "Returns", ylab = "Density")
+lines(density(sp$Today), col = "blue")  # Add a density line
+curve(dnorm(x, mean = mean(sp$Today), sd = sd(sp$Today)), col = "red", add = TRUE) 
+legend("topright", legend = c("Density", "Normal Distribution"), col = c("blue", "red"), lty = 1, cex = 0.6)
+
+# Second plot: Zoomed in on right tail with normal distribution fit
+hist(sp$Today, breaks = 50, freq = FALSE, xlim = c(2, 6), ylim = c(0, 0.1), main = "Zoomed Histogram of S&P 500 Returns", xlab = "Returns", ylab = "Density")
+curve(dnorm(x, mean = mean(sp$Today), sd = sd(sp$Today)), col = "red", add = TRUE)  # Add normal distribution curve
+legend("topright", legend = c("Normal Distribution"), col = c("red"), lty = 1, cex = 0.6)
+
+```
+
+
 \newpage
 
 
 2.2 (1 point) Suppose a Laplace distribution with parameters $\mu$ and $b$ is used to model *Today*. Estimate $\mu$ and $b$. Using the dlaplace(x,$\mu$,$b$) function in the VGAM library (dlaplace(x,$\mu$,$b$) is the pdf of the Laplace distribution), add a Laplace fit to the histogram for *Today*. Then, as in the previous question, zoom in on the right tail. Again, you should have two plots side by side. Is the Laplace distribution fitting the peak and tails better than the normal distribution?
 
+```{r,fig.width=10, fig.height=6}
+mu <- median(sp$Today)
+b <- mean(abs(sp$Today - mu)) / sqrt(2)
+
+library(VGAM)
+
+
+# Estimate parameters for the Laplace distribution
+mu <- median(sp$Today)
+b <- mean(abs(sp$Today - mu)) / sqrt(2)
+
+# Set up the layout for two side-by-side plots
+par(mfrow = c(1, 2))  # Split the plot window into two columns
+
+# First plot: Histogram with Laplace fit (regular view)
+hist(sp$Today, breaks = 50, freq = FALSE, main = "Density of S&P 500 Returns", 
+     xlab = "Returns", ylab = "Density")
+lines(density(sp$Today), col = "blue")  # Add density line
+curve(dlaplace(x, mu, b), add = TRUE, col = "red")  # Add Laplace distribution curve
+legend("topright", legend = c("Density", "Laplace Distribution"), col = c("blue", "red"), lty = 1, cex = 0.6)
+
+# Second plot: Zoomed in on the right tail
+hist(sp$Today, breaks = 50, freq = FALSE, xlim = c(2, 6), ylim = c(0, 0.1), 
+     main = "Zoomed Histogram of S&P 500 Returns", xlab = "Returns", ylab = "Density")
+curve(dlaplace(x, mu, b), add = TRUE, col = "red")  # Add Laplace distribution curve
+legend("topright", legend = c("Laplace Distribution"), col = "red", lty = 1, cex = 0.6)
+
+
+```
+
+
 \newpage
 
 2.3 (1.5 points) Add KDEs to the histogram for *Today* using 1/4 of the default bandwidth and four times the default bandwidth (on a single plot). Which fits the data better? Which is less oscillating and smoother? What does these results say about the choice of the bandwidth? (Search to find out how to adjust the bandwidth when you call the *density* function in R.)
+
+```{r, fig.width=10, fig.height=6}
+# Calculate the default KDE
+default_density <- density(sp$Today)
+
+# Calculate KDE with smaller bandwidth (1/4 of default)
+small_bw_density <- density(sp$Today, bw = default_density$bw / 4)
+
+# Calculate KDE with larger bandwidth (4 times the default)
+large_bw_density <- density(sp$Today, bw = default_density$bw * 4)
+
+# Plot the histogram of Today with density curves
+hist(sp$Today, breaks = 50, freq = FALSE, main = "KDEs with Different Bandwidths on S&P 500 Returns",
+     xlab = "Returns", ylab = "Density")
+
+# Add default KDE
+lines(default_density, col = "blue", lwd = 2, lty = 1)  # Default bandwidth
+
+# Add smaller bandwidth KDE
+lines(small_bw_density, col = "red", lwd = 2, lty = 1)  # Smaller bandwidth (1/4 of default)
+
+# Add larger bandwidth KDE
+lines(large_bw_density, col = "green", lwd = 2, lty = 1)  # Larger bandwidth (4x of default)
+
+# Add a legend to distinguish the plots
+legend("topright", legend = c("Default KDE", "Small Bandwidth (1/4)", "Large Bandwidth (4x)"),
+       col = c("blue", "red", "green"), lty = c(1, 2, 3), lwd = 2)
+
+```
+
 
 \newpage
 
 2.4 (1 point) Construct a boxplot for *Today*. Investigate the most negative outlier (you could use min and subset functions in R to identify this outlier). Is this outlier there by error or is it a legitimate data point? If it is legitimate, what caused this extreme negative return on that particular date?
 
+```{r}
+# Construct the boxplot for "Today" returns
+boxplot(sp$Today, main = "Boxplot of S&P 500 Returns", ylab = "Returns")
+
+# Find the most negative return
+min_return <- min(sp$Today)
+
+# Subset the data to find the row corresponding to the most negative return
+outlier_data <- subset(sp, Today == min_return)
+
+# Print the outlier information
+print(outlier_data)
+
+```
+
+
 \newpage
 
 2.5 (1 point) Report the correlation matrix for all the variables excluding Date and Direction. Do you see any strong linear relatioship? Construct a scatterplot matrix for these variables. Does it show any significant linear or nonlinear relationship? 
 
+```{r,fig.width=10, fig.height=6}
+# Calculate the correlation matrix, excluding Date and Direction
+cor_matrix <- cor(sp[, -c(1, 9)])  # Assuming Date is column 1 and Direction is column 9
+
+# Print the correlation matrix
+print(cor_matrix)
+
+
+# Scatterplot matrix for all variables except Date and Direction
+pairs(sp[, -c(1, 9)], main = "Scatterplot Matrix of S&P 500 Data")
+
+```
+
+
 \newpage
 
 2.6 (1 point) Construct a time series plot for Volume. What do you observe near the end of each year? What was the reason? 
+```{r}
+# Convert the Date column to Date type
+sp$Date <- as.Date(sp$Date, format="%m/%d/%Y")
+
+# Plot the time series of Volume
+plot(sp$Date, sp$Volume, type="l", col="blue", xlab="Date", ylab="Volume", 
+     main="Time Series of Trading Volume")
+
+
+
+```
+
 
 \newpage
 
 2.7 (1.5 points) Construct a normal plot and a Laplace plot for *Today*, side by side. Make sure that the ranges of the x-axis are the same for both plots. Between the normal distribution and the Laplace distribution, which is fitting the data better? Are the tails of the distribution for percentage return of S&P 500 fatter or thinner than those of a normal distribution? What are the sample skewness and kurtosis of *Today*? 
 
+```{r,fig.width=10, fig.height=6}
+library(VGAM)
+library(moments)
+
+
+# Create a 1x2 plotting layout for side-by-side Q-Q plots
+par(mfrow = c(1, 2))
+
+# Normal Q-Q plot for Today
+qqnorm(sp$Today, main = "Normal Q-Q Plot of S&P 500 Returns")
+qqline(sp$Today, col = "blue")
+
+# Generate the Q-Q plot comparing sample data with Laplace-distributed data
+qqplot(rlaplace(1000),sp$Today, main = "Laplace Q-Q Plot of S&P 500 Returns")
+qqline(sp$Today, col = "red")
+
+# Calculate skewness and kurtosis
+sample_skewness <- skewness(sp$Today)
+sample_kurtosis <- kurtosis(sp$Today)
+
+# Print the results
+cat("Sample Skewness:", sample_skewness, "\n")
+cat("Sample Kurtosis:", sample_kurtosis, "\n")
+
+```
 
 
 
